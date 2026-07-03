@@ -2,6 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+  // GitHub Pages serves this file with a several-minute cache lifetime and we
+  // can't set custom response headers on it, so force a one-time redirect to
+  // a URL with a fresh query string on every load that isn't already busted.
+  // That guarantees the browser fetches the latest index.html from the
+  // network instead of serving a stale cached copy.
+  if (!location.search.includes('v=')) {
+    location.replace(location.pathname + '?v=' + Date.now());
+  }
+</script>
 <title>Count to One Million</title>
 <style>
   :root {
