@@ -86,51 +86,75 @@
   const startBtn = document.getElementById('start');
   const resetBtn = document.getElementById('reset');
 
+  const STORAGE_KEY = 'count-to-million-v2';
+
   let n = 0;
   let running = false;
-  let startTime = 0;
+  let startEpoch = 0; // Date.now() at which n would have been 0
 
-  // Count in chunks per animation frame so a million ticks finish in a few
-  // seconds instead of a million individually-rendered frames.
-  const STEPS_PER_FRAME = 1000;
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ running, startEpoch, n }));
+  }
+
+  function load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (saved) {
+        running = saved.running;
+        startEpoch = saved.startEpoch;
+        n = saved.n;
+      }
+    } catch {}
+  }
 
   function render() {
     countEl.textContent = n.toLocaleString();
     barEl.style.width = (n / TARGET * 100) + '%';
   }
 
-  function tick() {
+  // Derive n from real elapsed time (rather than an incrementing setInterval
+  // counter) so the count stays accurate at exactly one per second even if
+  // the tab is backgrounded/throttled or the page is reloaded mid-count.
+  function update() {
     if (!running) return;
-    n = Math.min(TARGET, n + STEPS_PER_FRAME);
+    n = Math.min(TARGET, Math.floor((Date.now() - startEpoch) / 1000));
     render();
     if (n >= TARGET) {
       running = false;
-      const seconds = ((performance.now() - startTime) / 1000).toFixed(2);
-      statusEl.textContent = `Done in ${seconds}s`;
+      statusEl.textContent = 'Done!';
       startBtn.disabled = true;
-      return;
+    } else {
+      statusEl.textContent = 'Counting... (1 per second)';
     }
-    requestAnimationFrame(tick);
+    save();
   }
 
   startBtn.addEventListener('click', () => {
     if (running) return;
     running = true;
-    startTime = performance.now();
-    statusEl.textContent = 'Counting...';
+    startEpoch = Date.now() - n * 1000;
+    statusEl.textContent = 'Counting... (1 per second)';
     startBtn.disabled = true;
-    requestAnimationFrame(tick);
+    save();
   });
 
   resetBtn.addEventListener('click', () => {
     running = false;
     n = 0;
+    startEpoch = 0;
     render();
     statusEl.textContent = 'Ready';
     startBtn.disabled = false;
+    save();
   });
 
+  load();
   render();
+  if (running) {
+    statusEl.textContent = n >= TARGET ? 'Done!' : 'Counting... (1 per second)';
+    startBtn.disabled = true;
+  }
+  setInterval(update, 250);
 </script>
 </body>
 </html>
